@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -22,7 +23,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script>
   const map=L.map('map',{zoomControl:false}).setView([-19.0154,29.1549],6);L.control.zoom({position:'bottomright'}).addTo(map);
-  const light=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map),sat=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{y}/{x}.jpg',{maxZoom:18,attribution:'© Esri'});let layer,features=[],areaKey='',typeKey='';
+  const light=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map),sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'© Esri'});let layer,features=[],areaKey='',typeKey='';
   const $=id=>document.getElementById(id), file=$('fileInput');$('year').textContent=new Date().getFullYear();
   function fields(){let s=new Set();features.forEach(f=>Object.keys(f.properties||{}).forEach(k=>s.add(k)));return [...s]}
   function pick(keys,terms){return keys.find(k=>terms.some(t=>k.toLowerCase().includes(t)))||''}
@@ -36,12 +37,8 @@
   function loadGeo(obj){let fs=obj.type==='FeatureCollection'?obj.features:obj.type==='Feature'?[obj]:[];features=fs.filter(f=>f.geometry&&['Point','MultiPoint'].includes(f.geometry.type));if(!features.length){alert('No point features were found in this GeoJSON.');return}populateFields();redraw();$('empty').style.display='none';$('mapNote').textContent=features.length.toLocaleString()+' POINT FEATURES';$('snapLabel').textContent='LIVE DATA';$('updated').textContent='DATA LOADED';}
   function readFile(f){if(!f)return;const r=new FileReader;r.onload=e=>{try{loadGeo(JSON.parse(e.target.result))}catch{alert('That file is not valid GeoJSON or JSON.')}};r.readAsText(f)}
   ['loadBtn','sideLoad','emptyLoad'].forEach(id=>$(id).onclick=()=>file.click());file.onchange=e=>readFile(e.target.files[0]);['search','areaValue','typeValue'].forEach(id=>$(id).addEventListener('input',redraw));$('areaSelect').onchange=e=>{areaKey=e.target.value;populateValues('area');redraw()};$('typeSelect').onchange=e=>{typeKey=e.target.value;populateValues('type');redraw()};$('lightBtn').onclick=()=>{map.removeLayer(sat);light.addTo(map);$('lightBtn').classList.add('active');$('satBtn').classList.remove('active')};$('satBtn').onclick=()=>{map.removeLayer(light);sat.addTo(map);$('satBtn').classList.add('active');$('lightBtn').classList.remove('active')};document.addEventListener('dragover',e=>e.preventDefault());document.addEventListener('drop',e=>{e.preventDefault();readFile(e.dataTransfer.files[0])});
-    fetch('clinics.geojson')
-  .then(response => {
-    if (!response.ok) throw new Error('Dataset not found');
-    return response.json();
-  })
-  .then(loadGeo)
-  .catch(() => {});
+  // On Netlify/GitHub Pages, load the dataset bundled alongside index.html.
+  // Local file previews can block fetch(), so the manual loader remains available.
+  fetch('./clinics.geojson').then(r=>{if(!r.ok)throw new Error('Dataset unavailable');return r.json()}).then(loadGeo).catch(()=>{});
   </script>
 </body></html>
