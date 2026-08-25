@@ -36,5 +36,12 @@
   function loadGeo(obj){let fs=obj.type==='FeatureCollection'?obj.features:obj.type==='Feature'?[obj]:[];features=fs.filter(f=>f.geometry&&['Point','MultiPoint'].includes(f.geometry.type));if(!features.length){alert('No point features were found in this GeoJSON.');return}populateFields();redraw();$('empty').style.display='none';$('mapNote').textContent=features.length.toLocaleString()+' POINT FEATURES';$('snapLabel').textContent='LIVE DATA';$('updated').textContent='DATA LOADED';}
   function readFile(f){if(!f)return;const r=new FileReader;r.onload=e=>{try{loadGeo(JSON.parse(e.target.result))}catch{alert('That file is not valid GeoJSON or JSON.')}};r.readAsText(f)}
   ['loadBtn','sideLoad','emptyLoad'].forEach(id=>$(id).onclick=()=>file.click());file.onchange=e=>readFile(e.target.files[0]);['search','areaValue','typeValue'].forEach(id=>$(id).addEventListener('input',redraw));$('areaSelect').onchange=e=>{areaKey=e.target.value;populateValues('area');redraw()};$('typeSelect').onchange=e=>{typeKey=e.target.value;populateValues('type');redraw()};$('lightBtn').onclick=()=>{map.removeLayer(sat);light.addTo(map);$('lightBtn').classList.add('active');$('satBtn').classList.remove('active')};$('satBtn').onclick=()=>{map.removeLayer(light);sat.addTo(map);$('satBtn').classList.add('active');$('lightBtn').classList.remove('active')};document.addEventListener('dragover',e=>e.preventDefault());document.addEventListener('drop',e=>{e.preventDefault();readFile(e.dataTransfer.files[0])});
+    fetch('clinics.geojson')
+  .then(response => {
+    if (!response.ok) throw new Error('Dataset not found');
+    return response.json();
+  })
+  .then(loadGeo)
+  .catch(() => {});
   </script>
 </body></html>
